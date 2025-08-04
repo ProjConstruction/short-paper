@@ -1,0 +1,75 @@
+# LaTeX intermediate and output files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.gz
+*.nav
+*.snm
+*.synctex.gz
+*.xdv
+*.pdf
+*.dvi
+*.ps
+
+# Editor backup files
+*~
+*.swp
+*.bak
+*.tmp
+
+# MacOS files
+.DS_Store
+
+# Latexmk
+latexmkrc
+
+# Generated bibliography files
+*.bcf
+*.run.xml
+
+# Glossaries
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+
+# Subfiles package
+*.sub
+
+# Other
+*.idx
+*.ilg
+*.ind
+*.lof
+*.lot
+*.maf
+*.mtc*
+*.slg
+*.slo
+*.sls
+*.soc
+*.syc
+*.synctex(busy)
+*.tdo
+*.upa
+*.upb
+*.vrb
+
+*.lol
+
+*.mmz
+main.memo.dir/*
+
+*.lol
+*.thm

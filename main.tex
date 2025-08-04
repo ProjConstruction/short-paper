@@ -1,0 +1,541 @@
+ %%%%%%%%%%%%%%%%%%%% author.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample root file for your "contribution" to a contributed volume
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%% Springer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% RECOMMENDED %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[graybox]{svmult}
+
+
+%\usepackage{mathptmx}       % selects Times Roman as basic font
+\usepackage{helvet}         % selects Helvetica as sans-serif font
+\usepackage{courier}        % selects Courier as typewriter font
+\usepackage{type1cm}        % activate if the above 3 fonts are
+                            % not available on your system
+%
+\usepackage{makeidx}         % allows index generation
+\usepackage{graphicx}        % standard LaTeX graphics tool
+                             % when including figure files
+\usepackage{multicol}        % used for the two-column index
+\usepackage[bottom]{footmisc}% places footnotes at page bottom
+
+%%% PUT YOUR DEFINITIONS HERE - BEFORE \begin{document}
+
+\usepackage{amsmath, amssymb}
+
+\usepackage{listings}
+\usepackage{lstautogobble}
+\usepackage{lstlinebgrd}
+
+\usepackage[scaled]{inconsolata}
+\usepackage{xcolor}
+\definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+\definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+\definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+\definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
+
+\def\lstlanguagefiles{lstlean.tex}
+% set default language
+\lstset{
+  language=lean, 
+  basicstyle=\ttfamily\footnotesize,
+  autogobble=true,
+  escapeinside={(*@}{@*)},
+  captionpos=t,
+  aboveskip=0.5em,
+  belowskip=0em}
+
+
+\begin{document}
+
+\title*{On Proj schemes associated to multigraded rings and their formalization in dependent type theory}
+\titlerunning{Proj Construction} 
+\author{Arnaud Mayeux}
+% Use \authorrunning{Short Title} for an abbreviated version of
+% your contribution title if the original one is too long
+\institute{Arnaud Mayeux \at Einstein Institute of Mathematics, The Hebrew University of Jerusalem, Givat Ram. Jerusalem,
+9190401, Israel
+\email{arnaud.mayeux@mail.huji.ac.il}}
+
+%
+%
+\maketitle
+
+
+
+
+\section*{Introduction}
+Inspired by projective geometry, Grothendieck defined the Proj scheme of an $\mathbf{N}$-graded ring $A$ \cite{Gr61}. This is a well-known construction that every mathematician in scheme theory knows and that is explained in most books about algebraic geometry. This mathematical construction is used and presented in thousands of publications. 
+Beyond the definition of Proj, leading treatments also study quasi-coherent sheaves and twisting sheaves on Proj and use Proj to define blowups.  
+This construction was formalised by J. Zhang in Lean \cite{Z23}. 
+So it appears that this construction is optimal, well-understood and highly verified.  
+However, one can ask the following question. Why Grothendieck assume that $A$ is $\mathbf{N}$-graded instead of graded by a general commutative monoid or group? 
+Our answer is: there is no reason from the point of view of Grothendieck scheme theory. In fact, Brenner-Schröer defined the Proj of a ring graded by an arbitrary finitely generated abelian group \cite{BS03}.
+To our knowledge, as of 2025, textbooks never mentioned the work of Brenner and Schröer.
+ Informal versions of the multigraded Proj construction appear implicitly or
+explicitly (but without reference to Brenner-Schröer) in various constructions in advanced geometric representation theory (cf. \cite{MR24}).
+The first goal of this note is to survey Brenner-Schröer construction and new results \cite{BS03, MR24, MZ25}. The second goal of this note is to explain that most parts of the present material have been formalised in Lean4. Formalization of mathematics gives a revolutionary paradigm. First of all it ensures complete rigor and transparency in mathematical science. Secondly, combined with AI, formalization of mathematics allows mechanized AI-powered rigorous mathematical research. In the second part of this note, we discuss our joint formalization work. The first part was written after the insight offered by formalization. 
+
+
+\section{Definition of Proj and Behaviors}
+This section is based on \cite{BS03, MR24}. The reference \cite{BS03} laid the foundations by introducing the main definition, and \cite{Ma24} provides new results.  We refer to \cite{Ma24} for historical details. We focus on the mathematical content of the Proj construction here.
+If a given commutative ring $A$ is $M$-graded for some abelian group $M$, we will say that a submonoid $S$ of $A$ is homogeneous if every element of $S$ is homogeneous. 
+In this situation, the localization $A_S$ of $A$ with respect to $S$ is canonically $M$-graded.
+Given a graded $A$-module $Q$, one can also consider the localized module $Q_S$, which has a natural structure of a graded $A_S$-module.
+Given a homogeneous submonoid $S \subset A$, we will denote by $\underline{S}$ the homogeneous submonoid consisting of homogeneous divisors of elements in $S$. Note that we have a canonical isomorphism of graded rings
+ $A_{ \underline{S}} \cong A_{S}.
+$
+If $Q$ is a graded $A$-module we also have a canonical identification of graded abelian groups 
+$
+Q_{\underline{S}} \cong Q_S
+$
+compatible with the actions of $A_{ \underline{S}} = A_{S}$.
+Consider an abelian group $M$, and a commutative $M$-graded ring $A$. 
+
+\vspace{0.25\baselineskip}
+\noindent \textbf{Definition:}
+ Let $S$ be a homogeneous subset of $A$. We denote by $\deg(S)$ the subset of $M$ defined as 
+\[\deg(S):= \{ m \in M : \exists s \in S , s  \in A_m \}. \]
+
+ 
+Note that $\deg(\{0\})=M$.
+More generally, if $S$ is a homogeneous submonoid of $A$, then $\deg(S)$ is a submonoid of $M$, also denoted $M[S\rangle$.
+
+\vspace{0.25\baselineskip}
+\noindent \textbf{{Definition:}}
+Let $S$ be a homogeneous submonoid of $A$. 
+ We put $M[S]=M[S \rangle^{\mathrm{gp}}= M[S \rangle- M[S \rangle$, the subgroup of $M$ generated by $\deg(S)$.
+
+
+\vspace{0.25\baselineskip}
+\noindent\textbf{{Definition:}}
+ A homogeneous submonoid $S$ of $A$ is called \emph{$M$-relevant} (or just \emph{relevant} if $M$ is clear from the context) if for any $m$ in $M$ there exists $n \in \mathbf{Z}_{> 0}$ such that $nm$ belongs to $M[\underline{S}]$, i.e. if $M/(M[\underline{S}])$ is a torsion abelian group.
+ A family $\{a_i : i \in I\}$ of homogeneous elements in $A$ is called $M$-relevant if the submonoid generated by the $a_i$'s is relevant.
+ A homogeneous element $a \in A$ is called $M$-relevant if the family $\{a\}$ is $M$-relevant.
+
+
+
+
+Let $S$ be a homogeneous submonoid of $A$. 
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{\textbf{Definition:}}
+The degree-$0$ part $(A_S)_0$ of the localization $A_{S}$ is denoted $A_{(S)}$ and is called the \emph{potion} of $A$ with respect to $S$. 
+If $Q$ is a graded $A$-module, we will also denote by $Q_{(S)}$ the degree-$0$ part $(Q_S)_0$ of $Q_S$; it admits a canonical structure of an $A_{(S)}$-module.
+
+
+
+
+We have canonical identifications
+$A_{(\underline{S})} \cong A_{(S)}$ and $Q_{(\underline{S})} \cong Q_{(S)}$.
+If  $\{a_i : i \in I \}$ is a family of homogeneous elements of $A$, we will denote by
+$A_{(\{a_i : i \in I \})}$
+the potion associated with the submonoid of $A$ generated by $\{a_i : i \in I \}$; in case $\#I=1$ we will write $A_{(a)}$ for $A_{(\{a\})}$.
+
+If $S$ and $T$ are submonoids of $A$, we will denote by $ST$ the submonoid of $A$ generated by $S \cup T$, i.e. $ST = \{st : s \in S, \, t \in T \}$. Of course, $ST$ is homogeneous if $S$ and $T$ are.
+The following is the key result that makes the Proj construction work.
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition (Magic of potions):}}
+Let $S$ and $T$ be homogeneous submonoids of $A$. 
+\begin{enumerate}
+\item 
+\label{it:magic-1}
+We have a canonical homomorphism of potion rings 
+%\[\chi : 
+$A_{(S )} \to  A_{(ST )}$.
+%\]
+\item 
+\label{it:magic-2}
+Assume that $S$ is relevant. Fix a subset $T' \subset T$ which generates $T$ as a submonoid of $(A,\times)$ and, for any $t $ in $T'$, fix $n_t \in \mathbf{N}_{>0}$ and $s_t, s_t' \in \underline{S}$ such that $\deg(t^{n_t}) = \deg(s_t)-\deg(s_t')$.
+%$t^{n_t} \smile s_t$. 
+Then $\frac{t^{n_t} s_t'} { s_t}$ belongs to $A_{(\underline{S} )}=A_{(S)}$. 
+ Moreover we have a canonical isomorphism of $A_{(S )}$-algebras between $ A_{(ST )}$ and the localization of $A_{(S )}$ with respect to the submonoid of $A_{(S)}$ generated by $\{\frac{t^{n_t} s_t'} { s_t} : t \in T' \}$.
+\item 
+\label{it:magic-3}
+Assume that $S$ is relevant and that $T$ is finitely generated as submonoid of $(A,\times)$. The morphism of schemes 
+$
+\mathrm{Spec} (A_{(ST )}) \to \mathrm{Spec} (A_{(S)})
+$
+induced by the ring homomorphism in (1) is an open immersion of schemes.
+\item 
+\label{it:magic-4}
+Let $f_1, \ldots, f_n \in A$ be nonzero relevant homogeneous elements of the same degree.
+Then we have a canonical open immersion
+\[
+\mathrm{Spec}(A_{ (f_1 + \cdots + f_n) }) \to \mathrm{Spec} (A_{(f_1)}) \cup \cdots \cup \mathrm{Spec} (A_{(f_n)})
+\]
+where the right-hand side is defined as the glueing of the affine schemes $\mathrm{Spec} (A_{(f_i)})$ along the open subschemes $\mathrm{Spec} (A_{(f_i \cdot f_j)}) \subset \mathrm{Spec} (A_{(f_i)})$.
+\end{enumerate}
+
+
+
+
+From now on we assume that $M$ is a \emph{finitely generated} abelian group, and fix a commutative $M$-graded ring $A$.
+
+We will denote by $\mathcal{F}_A$ the set of all relevant homogeneous submonoids of $A$ which are finitely generated as submonoids of $(A,\times)$.
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Construction (Proj as glueing potions)}}
+Let
+$\mathcal{F} \subset \mathcal{F}_A$ be a subset.
+% of relevant homogeneous submonoids of $A$ such that any element in $\mathcal{F}$ is finitely generated as a submonoid of $(A, \times)$. 
+ For each $S \in \mathcal{F}$, let $D_{\dagger}(S)$ be the spectrum of the potion $A_{(S)}$. 
+ If $S,T \in \mathcal{F}$, the affine scheme $D_{\dagger}(ST)$ identifies canonically with an open subscheme of $D_{\dagger}(S)$. For each $S,T \in \mathcal{F}$, we have equalities
+$
+ D_{\dagger}({S S}) = D_{\dagger}(S) $ and $ D_{\dagger}({ST})=D_{\dagger}({TS}).
+$
+ Moreover, for each triple $S,T,U \in \mathcal{F}$, we have
+$
+ D_{\dagger}({ST} )\cap D_{\dagger}({SU}) = D_{\dagger}({TS}) \cap D_{\dagger}({TU}).
+$
+Now, by glueing, from these data we obtain a scheme $\mathrm{Proj}^M_{\mathcal{F} } (A)$ and, for each $S \in \mathcal{F}$, an open immersion $\varphi_S : D_{\dagger}(S) \to \mathrm{Proj}^M_{\mathcal{F}} (A)$, such that
+$
+\mathrm{Proj}^M_{\mathcal{F} } (A) = \bigcup_{S \in \mathcal{F} } \varphi_S( D_{\dagger}(S)).
+$
+In practice, we will often identify $D_{\dagger}(S) $ and $\varphi_S (D_{\dagger}(S))$. 
+In the case when $\mathcal{F} = \mathcal{F}_A$,
+ the scheme $\mathrm{Proj}^M_{\mathcal{F}_A} (A)$ will be denoted $\mathrm{Proj}^M(A)$, or just $\mathrm{Proj}( A)$ when $M$ is clear from the context.
+
+
+
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+The scheme $\mathrm{Proj}^M(A)$ is quasi-separated.
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+{\textbf{Proposition (Functoriality of Proj):}} 
+Let $\Psi:A \to B $ be a homomorphism of $M$-graded rings. 
+For any $\mathcal{F} \subset \mathcal{F}_A$ 
+%be a set of finite relevant families of $A$. Then $\Psi (\mathcal{F})$ is a set of relevant families of $B$ and 
+we have a canonical morphism of schemes $\mathrm{Proj}^M_{\Psi (\mathcal{F})} (B) \to \mathrm{Proj}^M_{\mathcal{F} } (A)$. Moreover, for any $S \in \mathcal{F}$ we have
+$\mathrm{Proj}^M_{\Psi(\mathcal{F})}(B) \times_{\mathrm{Proj}_{\mathcal{F}}^M(A)} D_\dag(S) = D_\dag(\Psi(S));$
+in particular, the morphism is affine.
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+Assume that $\Psi : A \to B$ is surjective. Then we have $\mathrm{Proj}^M_{\Psi (\mathcal{F}_A)} (B) = \mathrm{Proj}^M (B)$, and the canonical morphism
+ $\mathrm{Proj}^M(B) \to \mathrm{Proj}^M(A)$
+is a closed immersion.
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+ Let $M$ and $M'$ be two finitely generated abelian groups. Let $R$ be a commutative ring and let $A$ (resp.~$A'$) be a commutative $M$-graded (resp.~$M'$-graded) $R$-algebra. 
+ Then for the natural $(M \times M')$-grading on $A \otimes_R A'$, we have a canonical isomorphism
+ \[
+ \mathrm{Proj} ^{M \times M'} (A \otimes_R A') \cong \mathrm{Proj} ^M (A) \times_{\mathrm{Spec}(R)} \mathrm{Proj} ^{M'} (A'). 
+ \]
+
+
+We now study quasi-coherent sheaves on Proj.
+Let $Q$ be an $M$-graded $A$-module. For any homogeneous submonoid $S \subset A$, we have considered the $A_{(S)}$-module $Q_{(S)}$. The following fact is immediate by glueing of quasi-coherent sheaves.
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Definition:}}
+There exists 
+a unique quasi-coherent $\mathcal{O}_{\mathrm{Proj}^M(A)}$-module $\widetilde{Q}$ such that
+$\Gamma \bigl( D_\dag(S)  , \widetilde{Q} \bigr) = Q_{(S)}$
+for every $S \in \mathcal{F}_A$.
+
+
+
+An $M$-graded $A$-module $Q$ will be called \emph{negligible} if $\widetilde{Q}=0$.
+
+
+
+We now define the versions in our setting of the twisting sheaves. 
+If $Q$ is a graded $A$-module and $\alpha \in M$, we will denote by $Q(\alpha)$ the $M$-graded $A$-module which coincides with $Q$ as an $A$-module, but with the $M$-grading defined by $(Q(\alpha))_\beta = Q_{\alpha+\beta}$ for $\beta \in M$.
+
+
+\vspace{0.25\baselineskip}
+\noindent
+{\textbf{Definition (Twisting sheaves)}}
+Let $\alpha \in M$.
+\begin{enumerate}
+\item
+The quasi-coherent sheaf $\widetilde{A(\alpha)}$ on $\mathrm{Proj}^M(A)$ is 
+%called the \emph{$\alpha$-th-twist of the structure sheaf} of $\mathrm{Proj}^M(A)$, and is 
+denoted $\mathcal{O}_{\mathrm{Proj}^M(A)} (\alpha)$.
+\item
+If $\mathcal{Q}$ is a sheaf of $\mathcal{O}_{\mathrm{Proj}^M(A)}$-modules, we set $\mathcal{Q} (\alpha) = \mathcal{O}_{\mathrm{Proj}^M(A)} (\alpha ) \otimes_{\mathcal{O}_{\mathrm{Proj}^M(A)}} \mathcal{Q}$.
+\end{enumerate}
+
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+Assume that $A$ is a noetherian ring.
+\begin{enumerate}
+\item
+For any $\alpha \in M$, the quasi-coherent sheaf $\mathcal{O}_{\mathrm{Proj}^M(A)} (\alpha)$ is coherent.
+\item
+If $Q$ is a finitely generated $M$-graded $A$-module, then $\widetilde{Q}$ is coherent.
+\end{enumerate}
+
+
+
+
+A family $S \in \mathcal{F}_A$ will be called \emph{maximally relevant} if $M[\underline{S}]=M$.   We will denote by $\mathcal{F}_A^{\mathrm{m}} \subset \mathcal{F}_A$ the subset consisting of maximally relevant families. In this subsection we will explore various consequences of the following condition:
+$
+\mathrm{Proj}^M(A) = \bigcup_{S \in \mathcal{F}_A^{\mathrm{m}}} D_\dag(S).$
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+Assume that the above condition is satisfied. Then for any $ \alpha \in M$, the quasi-coherent $\mathcal{O}_{\mathrm{Proj}^M(A)}$-module $\mathcal{O}_{\mathrm{Proj}^M(A)} (\alpha)$ is an invertible sheaf.
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{{Proposition:}}
+Assume that the above condition is satisfied, and moreover that $\mathrm{Proj}^M(A)$ is quasi-compact. Then the functor
+\[
+\mathsf{L} : \mathrm{Mod}^M(A) / \mathrm{Mod}^M(A)_{\mathrm{neg}} \to \mathrm{QCoh}(\mathrm{Proj}^M(A))
+\]
+is an equivalence of categories.
+
+
+
+
+
+\vspace{0.25\baselineskip}
+\noindent
+\textbf{Example (Flag variety as Proj)}
+ Let $k$ be an algebraically closed field and let $G$ be
+a connected reductive group scheme over $k.$ Let $T$ be a maximal split torus
+and $B$ be a Borel subgroup such that $B = T N$ where $N$ is the unipotent
+radical. Then $G/N$ is quasi-affine and the ring $A := \Gamma (G/N, \mathcal{O}_{G/N} )$ is canonically $X^*(T)$-graded. We have a schematically dominant open immersion
+$G/N \to \mathrm{Spec}(A)$. 
+The flag variety $G/B$ identifies with $\mathrm{Proj}^{X^*(T)} (A)$.
+Consider a finite-dimensional $G$-module $\widetilde{V}$ and a $B$-stable subspace $V \subset \widetilde{V}$. 
+We can then consider the induced scheme
+$
+ G \times^{B} V,
+$
+i.e.~the quotient of the product $G \times V$ by the (free) action of $B$ defined by $b \cdot (g,x) = (gb^{-1}, b \cdot x)$.  It is a vector bundle over $G/B$.
+There is a canonical way to see such schemes as Proj schemes.
+An interesting case is when $\widetilde{V}$ is the Lie algebra of $G$ and $V$ is the Lie algebra of the unipotent radical of $B$. In this case, $G \times^{B} V$ is the so-called \emph{Springer resolution}.
+
+
+\section{Formalisation}
+
+
+Based on dependent type theory, Lean4 is an interactive proof assistant designed for formalising advanced mathematics \cite{dMal15, dMU21}.
+mathlib is a growing library written in Lean4 developed by the community covering a wide range of mathematics \cite{Mathlib}.
+The above Proj construction was formalised in Lean4 (Magic of potions and the glueing step) and mathlib \cite{MZ25}. 
+The Lean4 code is around 8000 lines, for 400 lines of \LaTeX  (around 10 PDF pages).
+We use much of the material on the formalisation of scheme theory available in mathlib \cite{Bual22, WZ22}.
+Previously, Zhang has formalised the $\mathbf{N}$-graded $\mathrm{Proj}$ construction \cite{Z23} (using a different method).
+Formalisation ensures that there is no error (rigor), and it provides data for future AI-mathematics; in the long run, we expect formalised mathematics to become more and more popular \cite{Av24, Bu24}. Formalised mathematics is required for rigorous (non-hallucinating) AI-generated advanced mathematical research. It would be very nice to see advances in AI-automated formalisation and a more \LaTeX-friendly interface for formalisation.
+As of Spring 2025, Copilot (Lean 2025 AI) remained sometimes helpful but insufficiently effective for assisting with the formalisation of algebraic geometry. Copilot was not able to prove that $0 \times 1 = 0$ in a certain non-trivial graded ring. The present work \cite{MZ25}, as new formalised data, will contribute to the training of these already powerful tools.
+
+\subsection{Examples of Formalisation} 
+
+\paragraph{Potions:}%
+Compared to sets and subsets, quotient type is a fundamental concept in the type system of Lean4. 
+Therefore, it is more natural and ergonomic to define the degree-$0$ part of a graded ring as a quotient type 
+instead of a subset of the graded ring. For an $\iota$-graded ring $A \cong \bigoplus_{i : \iota} \mathcal{A}_i$ and a submonoid $x \le A$, 
+we define the degree-$0$ part of the localization $A_x$ to be the equivalence classes of triples $(i, n, d)$ where 
+$i : \tau$ and both $n$ and $d$ are elements of $\mathcal{A}_i$ under the equivalence relation 
+$(i, n, d) \sim (i', n', d')$ if and only if the equality $\frac{n}{d} = \frac{n'}{d'}$ in the localized ring $A_x$:
+\begin{lstlisting}
+structure NumDenSameDeg where
+  deg : ι
+  (num den : 𝒜 deg)
+  den_mem : (den : A) ∈ x
+
+def NumDenSameDeg.embedding (p : NumDenSameDeg 𝒜 x) :=
+  Localization.mk p.num ⟨p.den, p.den_mem⟩
+
+def HomogeneousLocalization : Type _ :=
+  Quotient (Setoid.ker <| NumDenSameDeg.embedding 𝒜 x)
+\end{lstlisting}
+The advantage of the quotient approach is two-fold:
+\begin{itemize}
+  \item The numerator $n$, the denominator $d$, the degree $i$ and the fact that $n, d \in \mathcal{A}_i$ and $d \in x$ and  are one application of axiom of choice away.
+  Compared to the set-theoretic approach $A_{(x)} = \left\{f\middle|\exists i \in \iota, n \in \mathcal{A}_i \cap x, d \in \mathcal{A}_i, f = \frac{n}{d}\right\}$, the extraction of the data needs repeated application of AC.
+  \item The quotient type comes with a universal property already making defining functions out of $A_{(x)}$ convenient.
+\end{itemize}
+
+\paragraph{Magic of Potions:}%
+The practice of formalisation often forces a clearer statement.
+In the second part of the magic of potions, we can define the following data type:
+\begin{lstlisting}
+structure PotionGen where
+  (index : Type*)
+  (elem : index → A)
+  (elem_mem : ∀ t, elem t ∈ T)
+  (gen : Submonoid.closure (Set.range elem) = T.toSubmonoid)
+  (n : index → ℕ+)
+  (s s' : index → A)
+  (s_mem_bar : ∀ t, s t ∈ S.bar)
+  (s'_mem_bar : ∀ t, s' t ∈ S.bar)
+  (i i' : index → ι)
+  (t_deg : ∀ t : index, (elem t : A)^(n t : ℕ) ∈ 𝒜 (i t - i' t))
+  (s_deg : ∀ t, s t ∈ 𝒜 (i t))
+  (s'_deg : ∀ t, s' t ∈ 𝒜 (i' t))
+
+def PotionGen.genSubmonoid (T' : PotionGen S T) : Submonoid S.Potion :=
+  Submonoid.closure
+    {x | ∃ (t : T'.index), x =
+      S.equivBarPotion.symm (.mk
+        { deg := T'.i t,
+          num := ⟨(T'.elem t) ^ (T'.n t : ℕ) * T'.s' t,
+            by simpa using SetLike.mul_mem_graded (T'.t_deg t) (T'.s'_deg t)⟩,
+          den := ⟨T'.s t, T'.s_deg t⟩,
+          den_mem := T'.s_mem_bar t }) }
+\end{lstlisting}
+Therefore, the statement of the second part of the magic of potions can be stated as:
+for every finitely generated, relevant homogeneous submonoid $S, T$ of $A$ and any \lstinline|PotionGen S T| $T'$, we have an isomorphism between
+the potion $A_{(ST)}$ and the localized ring of $A_S$ at \lstinline|genSubmonoid| $T'$:
+\begin{lstlisting}
+def localizationRingEquivPotion (T' : PotionGen S T) :
+    Localization T'.genSubmonoid ≃+* (S * T).Potion := ...
+\end{lstlisting}
+Of course, in a pen-and-paper proof, one could define auxiliary structures to make the same effect, 
+but the absence of such structures does not put the burden to the author, therefore, the author is 
+less motivated to define such structures. However, in formalisation, 
+the burden is put on the authors --- without such structures, the proof is not only less readable to the reader, but much harder to write for the author as well.
+
+\paragraph{How much rigour is too much rigour?}%
+On the other hand, the clarity and rigour brought by formalisation \textit{a priori} requires extra 
+care from the formaliser --- steps seen as unnecessary on pen-and-paper suddenly need to 
+be explained to computers. One can admit that this is because type theory is not the same as set theory and 
+one should not expect verbatim practices and there are many places where intermediate steps are indeed missing.
+Consider the following example, if $S$ and $T$ are two homogeneous submonoids $A$, we have a canonical isomorphism of graded rings
+$A_{(S)}$ and $A_{(T)}$. 
+Note that both in set theory and in type theory, the isomorphism does not come from the equality $A_{(S)} = A_{(T)}$:
+in set theory, $A_{(S)}$ and $A_{(T)}$ are subrings of $A_S$ and $A_T$ respectively,  
+therefore, the literal equality $A_{(S)} = A_{(T)}$ are not true; 
+in type theory, the equality of types generally produce functions that are harder to work with because of the excessive need of \lstinline|rewrite| of the equality $S = T$.
+Therefore, we need the following definition: note that both directions of the isomorphism are constructed
+using the universal property of quoteint types and not directly from the equality $S = T$:
+\begin{lstlisting}
+def potionEquiv {S T : HomogeneousSubmonoid 𝒜} (eq : S = T) : 
+    S.Potion ≃+* T.Potion := 
+  RingEquiv.ofHomInv
+    (HomogeneousLocalization.map _ _ (RingHom.id _) ... : 
+      S.Potion →+* T.Potion)
+    (HomogeneousLocalization.map _ _ (RingHom.id _) ... : 
+      T.Potion →+* S.Potion)
+    ...
+\end{lstlisting}
+The complaint is less about the necessity of the definition in the formalisation, but more about that 
+the extra (tedious) work of dealing with the canonical isomorphism $A_{(S)} \cong A_{(T)}$ in subsequent proofs.
+Compared to the pen-and-paper approach, technically, the isomorphism $A_{(S)} \cong A_{(T)}$ still need to be defined, 
+but no mental effort is required to process the definition in the subsequent work.
+
+
+\paragraph{Commutative diagram:}%
+{\bf to be written}
+
+\section{Conclusion}
+\begin{tabular}{|l|c|r|}
+  \hline
+  \textbf{Property of the Proj construction} & \cite{Gr61}  & \cite{BS03,MR24} \\
+  \hline
+  Grading & $\mathbf{N} $ & finitely genenerated ab. group \\
+  \hline
+  Definition via prime ideals works & Yes & No\\
+   \hline
+  Definition via prime ideals required & No & No\\
+  \hline
+  Definition via glueing works & Yes & Yes\\
+  \hline 
+  Glueing steps required & Yes & Yes \\ 
+  \hline
+  Twisting sheaves available & Yes & Yes \\ 
+  \hline
+ Compatible with tensor product & No & Yes \\ 
+  \hline
+  Separated & Yes & No, but quasi-separated \\
+  \hline 
+  Compatible with blowups & Yes & Yes \\
+  \hline 
+  Allows to describe G/B canonically  & No & Yes \\
+  \hline 
+  Qcoh on Proj via graded modules   & Yes & Yes \\
+  \hline 
+  Verified in Lean    & Yes & Yes \\
+  \hline 
+\end{tabular}
+Finally, the level of technicality in the Grothendieck setting is almost the same as that in the Brenner–Schröer setting.
+ \begin{thebibliography}{99.}
+
+
+\bibitem[Av24]{Av24} J.\,Avigad: {\it Automated reasoning for mathematics,} in {\it Automated reasoning. Part I}, 3--20, Lecture Notes in Comput. Sci. Lecture Notes in Artificial Intelligence, 14739 , Springer, Cham, 2024.
+
+\bibitem[BS03]{BS03} H.\,Brenner, S.\,Schröer: {Ample families, multihomogeneous spectra, and algebraization of formal schemes} Pacific J. Math. 208 (2003), no. 2, 209–230.
+
+\bibitem[Bual22]{Bual22} K.\,Buzzard, C.\,Hughes, K. Lau, A\,
+              Livingston, R. F. Mir, and S.\,Morrison: {\it Schemes in Lean,} Exp. Math. {\bf 31} (2022), no.~2, 355--363.
+                 
+              
+              
+\bibitem[Bu24]{Bu24} K.\,Buzzard: {\it Mathematical reasoning and the computer,} Bull. Amer. Math. Soc. (N.S.) {\bf 61} (2024), no.~2, 211--224.  
+
+
+
+\bibitem[Gr61]{Gr61} A.\,Grothendieck: {Éléments de géométrie algébrique : II. Étude globale élémentaire de quelques classes de morphismes} Publications mathématiques de l’I.H.É.S., tome 8 (1961), p. 5-222
+
+\bibitem[Mathlib]{Mathlib} Lean Community: {Mathlib}, https://leanprover-community.github.io/mathlib-overview.html
+
+
+
+\bibitem[Ma24]{Ma24} A.\,Mayeux: {\it Multi-centered dilatations, congruent isomorphisms and Rost double deformation space,}
+Transformation Groups, 2024 https://doi.org/10.1007/s00031-024-09894-9
+
+
+
+\bibitem[MR24]{MR24}A. Mayeux and S. Riche, On multi-graded Proj schemes, to appear in Publ. Res. Inst. Math. Sci. (Kyoto Univ., EMS Press)
+
+
+
+\bibitem[MZ25]{MZ25}A. Mayeux and J. Zhang, Multi-graded Proj construction in Lean4, https://github.com/ProjConstruction/Proj (2025)
+
+\bibitem[dMU21]{dMU21}
+L.\,de\,Moura and S.\,Ullrich: {\it The Lean 4 theorem prover and programming language,} in {\it Automated deduction---CADE 28}, 625--635, Lecture Notes in Comput. Sci., 12699, Springer, Cham, 2021.
+
+\bibitem[dMal15]{dMal15}
+L.\,de\,Moura, S.\,Kong, J.\,Avigad, F.\,van\,Doorn and J.\,von\,Raumer: {\it The lean theorem prover (system description)}, in {\it Automated deduction---CADE 25}, 378--388, Lecture Notes in Comput. Sci. Lecture Notes in Artificial Intelligence, 9195 , 2015 Springer, Cham.
+
+\bibitem[Z23]{Z23}J. Zhang, Formalising the Proj construction in Lean, in {\it 14th International Conference on Interactive Theorem Proving}, Art. No. 35, LIPIcs. Leibniz Int. Proc. Inform., 268 (2023).
+
+\bibitem[WZ22]{WZ22}
+E.\,Wieser and J.\,Zhang: {\it Graded rings in Lean's dependent type theory,} in {\it Intelligent computer mathematics}, 122--137, Lecture Notes in Comput. Sci. Lecture Notes in Artificial Intelligence, 13467 , Springer, Cham, 2022.
+
+\end{thebibliography}
+
+%\input{referenc}
+\end{document}
+
+
