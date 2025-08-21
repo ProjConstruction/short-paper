@@ -68,7 +68,11 @@
 \maketitle
 
 
+From the point of view of physics, mathematics provides a rigorous language to describe and think about physical phenomena. 
+Until recently, rigour in mathematics relied on human verifications and was not optimal. Recently, new efficient tools appeared to ensure rigour in mathematics: formalization theorem prover like Lean. 
+This is now a recognized field of study that will impact our way of doing mathematics and consequently physics. Combined with generative AI-methods, one might get a revolutionary mechanization of mathematics and basic science. To solve very big problems, one might need new science and new mathematics unreachable by previous human-only method. For example, current science anticipates, with convincing arguments, that the solar system will not be viable in a finite number of years, and we expect mechanized science could participate in solving the issue of saving humanity before that time (interstellar travels or other solutions). In this modest note, we report on our recent formalization of the multi-graded proj construction of Brenner-Schroër. We view this work as a contribution to the emergence of mechanization of mathematics and science. We provide complete data proof of this formalization. The multi-graded Proj construction lies at the crossroads of algebraic geometry and Lie theory, both used fields in theoretical physics.
 
+We now describe the mathematical content of this note. Inspired by projective geometry, Grothendieck defined the Proj scheme of an $\mathbf{N}$-graded ring $A$ \cite{Gr61}.
 
 \section*{Introduction}
 Inspired by projective geometry, Grothendieck defined the Proj scheme of an $\mathbf{N}$-graded ring $A$ \cite{Gr61}. This is a well-known construction that every mathematician in scheme theory knows and that is explained in most books about algebraic geometry. This mathematical construction is used and presented in thousands of publications. 
@@ -426,21 +430,20 @@ but the absence of such structures does not put the burden to the author, theref
 less motivated to define such structures. However, in formalisation, 
 the burden is put on the authors --- without such structures, the proof is not only less readable to the reader, but much harder to write for the author as well.
 
-\paragraph{Commutative diagram:}%
-{\bf to be written}
+% \paragraph{Commutative diagram:}%
+% {\bf to be written}
 
-\paragraph{How much rigour is too much rigour?}%
+\paragraph{In pursuit of absolute rigour}%
 On the other hand, the clarity and rigour brought by formalisation \textit{a priori} requires extra 
 care from the formaliser --- steps seen as unnecessary on pen-and-paper suddenly need to 
 be explained to computers. One can admit that this is because type theory is not the same as set theory and 
 one should not expect verbatim practices and there are many places where intermediate steps are indeed missing.
-Consider the following example, if $S$ and $T$ are two equal homogeneous submonoids $A$, we have a canonical isomorphism of graded rings
-$A_{(S)}$ and $A_{(T)}$. 
-Note that both in set theory and in type theory, the isomorphism does not come from the equality $A_{(S)} = A_{(T)}$:
-in set theory, $A_{(S)}$ and $A_{(T)}$ are subrings of $A_S$ and $A_T$ respectively,  
-therefore, the literal equality $A_{(S)} = A_{(T)}$ are not true; 
-in type theory, the equality of types generally produce functions that are harder to work with because of the excessive need of \lstinline|rewrite| of the equality $S = T$.
-Therefore, we need the following definition: note that both directions of the isomorphism are constructed
+A noticeable difference is the notion of equality --- consider the following example, if $S$ and $T$ are two equal homogeneous submonoids $A$, 
+we should be able to treat $A_{(S)}$ and $A_{(T)}$ as the same object in some sense. 
+Prior to formalisation, we thought $A_{(S)}$ and $A_{(T)}$ are equal, but in set theory, $A_{(S)}$ and $A_{(T)}$ are subrings of $A_S$ and $A_T$ respectively,  
+therefore, the literal equality $A_{(S)} = A_{(T)}$ is simply not true. 
+In type theory, though we can prove the equality $A_{(S)} = A_{(T)}$ holds, the equality provide less useful functions because of the excessive need of \lstinline|rewrite| of the equality $S = T$.
+Therefore, $A_{(S)}$ and $A_{(T)}$ are the same because the following isomorphism, note that both directions of the isomorphism are constructed
 using the universal property of quoteint types and not directly from the equality $S = T$:
 \begin{lstlisting}
 def potionEquiv {S T : HomogeneousSubmonoid 𝒜} (eq : S = T) : 
@@ -452,10 +455,9 @@ def potionEquiv {S T : HomogeneousSubmonoid 𝒜} (eq : S = T) :
       T.Potion →+* S.Potion)
     ...
 \end{lstlisting}
-The complaint is less about the necessity of the definition in the formalisation, but more about that 
-the extra (tedious) work of dealing with the canonical isomorphism $A_{(S)} \cong A_{(T)}$ in subsequent proofs.
-Compared to the pen-and-paper approach, technically, the isomorphism $A_{(S)} \cong A_{(T)}$ still need to be defined, 
-but no mental effort is required to process the definition in the subsequent work.
+The requirement of spelling out ``trivial'' isomorphisms is not only an artifact of type theory, 
+it is needed for rigour: consider the isomorphism between Cartisean product $A \times B \cong B \times A$, in case of $A = B$,
+without more details $A \times A \cong A \times A$ is ambiguous. 
 
 
 \section{Conclusion}
