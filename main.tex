@@ -78,7 +78,11 @@ The Lean4 code of the formalization of the multi-graded Proj construction is aro
 We use much of the material on the formalisation of scheme theory available in mathlib \cite{Bual22, WZ22}.
 Previously, Zhang has formalised the $\mathbf{N}$-graded $\mathrm{Proj}$ construction \cite{Z23} (using a different method).
 It would be very nice to see advances in AI-automated formalisation and a more \LaTeX-friendly interface for formalisation.
-As of Spring 2025, Copilot (Lean 2025 AI) remained sometimes helpful but insufficiently effective for assisting with the formalisation of algebraic geometry. Copilot was not able to prove that $0 \times 1 = 0$ in a certain non-trivial graded ring. The present work \cite{MZ25}, as new formalised data, will contribute to the training of these already powerful tools.
+As of Spring 2025, Copilot (Lean 2025 AI) remained sometimes helpful but insufficiently effective for assisting with the formalisation of algebraic geometry. 
+It is helpful in the sense that it is able to mimic what has been shown, for example transcribing the grading on tensor product of rings to the grading on tensor product of modules.
+However, Copilot could not distinguish similarly-looking statements with different proofs, 
+for example, it was not able to prove that $0 \times 1 = 0$ in a certain non-trivial graded ring, because this simple calculation not only invloves axioms of ring, but requires reasoning of the degrees as well. 
+The present work \cite{MZ25}, as new formalised data, will contribute to the training of these already powerful tools.
 
 We now describe the mathematical content of this note. 
 
@@ -359,9 +363,7 @@ An interesting case is when $\widetilde{V}$ is the Lie algebra of $G$ and $V$ is
 
 \section{Formalisation}
 
-
-
-\subsection{Examples of Formalisation} 
+\subsection*{Examples of Formalisation} 
 
 \paragraph{Potions:}%
 Compared to sets and subsets, quotient type is a fundamental concept in the type system of Lean4. 
@@ -429,10 +431,7 @@ but the absence of such structures does not put the burden to the author, theref
 less motivated to define such structures. However, in formalisation, 
 the burden is put on the authors --- without such structures, the proof is not only less readable to the reader, but much harder to write for the author as well.
 
-% \paragraph{Commutative diagram:}%
-% {\bf to be written}
-
-\paragraph{In pursuit of absolute rigour}%
+\subsection*{In pursuit of absolute rigour}%
 On the other hand, the clarity and rigour brought by formalisation \textit{a priori} requires extra 
 care from the formaliser --- steps seen as unnecessary on pen-and-paper suddenly need to 
 be explained to computers. One can admit that this is because type theory is not the same as set theory and 
@@ -455,8 +454,8 @@ def potionEquiv {S T : HomogeneousSubmonoid 𝒜} (eq : S = T) :
     ...
 \end{lstlisting}
 The requirement of spelling out ``trivial'' isomorphisms is not only an artifact of type theory, 
-it is needed for rigour: consider the isomorphism between Cartisean product $A \times B \cong B \times A$, in case of $A = B$,
-without more details $A \times A \cong A \times A$ is ambiguous. 
+it is needed for rigour: consider the isomorphism between Cartisean products $A \times B \cong B \times A$, in case of $A = B$,
+without more details $A \times A \cong A \times A$ is indeed ambiguous. 
 
 
 \section{Conclusion}

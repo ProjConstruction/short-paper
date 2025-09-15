@@ -41,8 +41,16 @@
 \definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
 
 
+\def\lstlanguagefiles{lstlean.tex}
 % set default language
-
+\lstset{
+  language=lean, 
+  basicstyle=\ttfamily\footnotesize,
+  autogobble=true,
+  escapeinside={(*@}{@*)},
+  captionpos=t,
+  aboveskip=0.5em,
+  belowskip=0em}
 
 
 \begin{document}
@@ -78,11 +86,11 @@ Efforts to mechanize aspects of scientific reasoning have been intertwined with 
 \end{enumerate}
  \end{small}
 These citations are extracted directly from \cite{Ha61}. Comparable thoughts can be found in many other antecedent and subsequent texts. Further consequences and visions are abundant too.
-Formalization theorem provers like Lean (cf. \cite{dMal15, dMU21, Av24, Bu24}) fulfill the condition of C1. Lean is enough easy to use to be called a \textquotedblleft theorem-proof checker\textquotedblright (cf. C4).  In this note, we discusses the Lean formalization of the multi-graded Proj construction \cite{MZ25}. The multi-graded Proj construction sits at the crossroads of algebraic geometry and Lie theory \cite{BS03,MR24}, both fields actively used in theoretical physics.
+Formalization theorem provers like Lean (cf. \cite{dMal15, dMU21, Av24, Bu24}) fulfill the condition of C1. Lean is enough easy to use to be called a \textquotedblleft theorem-proof checker\textquotedblright (cf. C4).  In this note, we discuss the Lean formalization of the multi-graded Proj construction \cite{MZ25}. The multi-graded Proj construction sits at the crossroads of algebraic geometry and Lie theory \cite{BS03,MR24}, both fields actively used in theoretical physics.
 The Lean4 code of the formalization of the multi-graded Proj construction is around 8000 lines, for 400 lines of \LaTeX.
 This uses much of the material on the formalisation of scheme theory available in mathlib \cite{Z23, Bual22, WZ22, Mathlib}.
 It would be useful to see advances in AI-automated formalisation and a more visual interface for formalisation (e.g. \LaTeX-friendly).
-As of Spring 2025, Copilot (Lean 2025 AI) remained insufficiently effective for assisting with the formalisation of algebraic geometry. Copilot was not able to fill by itself the proof of the fact that $0 \times 1 = 0$ in a certain non-trivial graded ring. In relation with C2 and C3 above, the present work \cite{MZ25}, as new formalised data, will contribute to the training of these already powerful tools.
+As of Spring 2025, Copilot (Lean 2025 AI) remained insufficiently effective for assisting with the formalisation of algebraic geometry. Copilot was not able to fill by itself the proof of the fact that $0 \times 1 = 0$ in a certain non-trivial graded ring, because the simple calculation involves proofs about degree as well. In relation with C2 and C3 above, the present work \cite{MZ25}, as new formalised data, will contribute to the training of these already powerful tools.
 We now introduce the algebraic part of this note. 
 Inspired by projective geometry, Grothendieck defined the Proj scheme of an $\mathbf{N}$-graded ring $A$ \cite{Gr61}. This construction is used and presented in thousands of publications. 
 Beyond the definition of Proj, most treatments also study quasi-coherent sheaves and twisting sheaves on Proj and use Proj to define blowups.  
@@ -352,7 +360,18 @@ we define the degree-$0$ part of the localization $A_x$ to be the equivalence cl
 $i : \tau$ and both $n$ and $d$ are elements of $\mathcal{A}_i$ under the equivalence relation 
 $(i, n, d) \sim (i', n', d')$ if and only if the equality $\frac{n}{d} = \frac{n'}{d'}$ in the localized ring $A_x$:
 
-\includegraphics[scale=0.41]{figure1_Mayeux_Zhang.png}
+\begin{lstlisting}
+structure NumDenSameDeg where
+  deg : ι
+  (num den : 𝒜 deg)
+  den_mem : (den : A) ∈ x
+
+def NumDenSameDeg.embedding (p : NumDenSameDeg 𝒜 x) :=
+  Localization.mk p.num ⟨p.den, p.den_mem⟩
+
+def HomogeneousLocalization : Type _ :=
+  Quotient (Setoid.ker <| NumDenSameDeg.embedding 𝒜 x)
+\end{lstlisting}
 
 The advantage of the quotient approach is two-fold:
 \begin{itemize}
@@ -364,16 +383,40 @@ The advantage of the quotient approach is two-fold:
 The practice of formalisation often forces a clearer statement.
 In the second part of the magic of potions, we can define the following data type:
 
-\includegraphics[scale=0.41]{figure2_Mayeux_Zhang.png}
+\begin{lstlisting}
+structure PotionGen where
+  (index : Type*)
+  (elem : index → A)
+  (elem_mem : ∀ t, elem t ∈ T)
+  (gen : Submonoid.closure (Set.range elem) = T.toSubmonoid)
+  (n : index → ℕ+)
+  (s s' : index → A)
+  (s_mem_bar : ∀ t, s t ∈ S.bar)
+  (s'_mem_bar : ∀ t, s' t ∈ S.bar)
+  (i i' : index → ι)
+  (t_deg : ∀ t : index, (elem t : A)^(n t : ℕ) ∈ 𝒜 (i t - i' t))
+  (s_deg : ∀ t, s t ∈ 𝒜 (i t))
+  (s'_deg : ∀ t, s' t ∈ 𝒜 (i' t))
 
-\includegraphics[scale=0.41]{figure3_Mayeux_Zhang.png}
+def PotionGen.genSubmonoid (T' : PotionGen S T) : Submonoid S.Potion :=
+  Submonoid.closure
+    {x | ∃ (t : T'.index), x =
+      S.equivBarPotion.symm (.mk
+        { deg := T'.i t,
+          num := ⟨(T'.elem t) ^ (T'.n t : ℕ) * T'.s' t,
+            by simpa using SetLike.mul_mem_graded (T'.t_deg t) (T'.s'_deg t)⟩,
+          den := ⟨T'.s t, T'.s_deg t⟩,
+          den_mem := T'.s_mem_bar t }) }
+\end{lstlisting}
 
 Therefore, the statement of the second part of the magic of potions can be stated as:
 for every finitely generated, relevant homogeneous submonoid $S, T$ of $A$ and any \lstinline|PotionGen S T| $T'$, we have an isomorphism between
 the potion $A_{(ST)}$ and the localized ring of $A_S$ at genSubmonoid $T'$:
 
-\includegraphics[scale=0.41]{figure4_Mayeux_Zhang.png}
-
+\begin{lstlisting}
+def localizationRingEquivPotion (T' : PotionGen S T) :
+    Localization T'.genSubmonoid ≃+* (S * T).Potion := ...
+\end{lstlisting}
 Of course, in a pen-and-paper proof, one could define auxiliary structures to make the same effect, 
 but the absence of such structures does not put the burden to the author, therefore, the author is 
 less motivated to define such structures. However, in formalisation, 
@@ -391,7 +434,16 @@ In type theory, though we can prove the equality $A_{(S)} = A_{(T)}$ holds, the 
 Therefore, $A_{(S)}$ and $A_{(T)}$ are the same because the following isomorphism, note that both directions of the isomorphism are constructed
 using the universal property of quotient types and not directly from the equality $S = T$:
 
-\includegraphics[scale=0.41]{figure5_Mayeux_Zhang.png}
+\begin{lstlisting}
+def potionEquiv {S T : HomogeneousSubmonoid 𝒜} (eq : S = T) : 
+    S.Potion ≃+* T.Potion := 
+  RingEquiv.ofHomInv
+    (HomogeneousLocalization.map _ _ (RingHom.id _) ... : 
+      S.Potion →+* T.Potion)
+    (HomogeneousLocalization.map _ _ (RingHom.id _) ... : 
+      T.Potion →+* S.Potion)
+    ...
+\end{lstlisting}
 
 The requirement of spelling out ``trivial'' isomorphisms is not only an artifact of type theory, 
 it is needed for rigour: consider the isomorphism between Cartesian product $A \times B \cong B \times A$, in case of $A = B$,
